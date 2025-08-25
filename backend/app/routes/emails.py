@@ -11,18 +11,24 @@ def create_email(email: EmailCreate):
     response = generate_response(classification)
 
     try:
-        cur = supabase.cursor()
-        cur.execute(
-            """
-            INSERT INTO Emails (subject, sender, content, classification, response)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id;
-            """,
-            (email.subject, email.sender, email.content, classification, response)
-        )
-        email_id = cur.fetchone()[0]
-        supabase.commit()
-        return {"id": email_id, "classification": classification, "response": response}
+        # Inserir registro no Supabase
+        result = supabase.table("Emails").insert({
+            "subject": email.subject,
+            "sender": email.sender,
+            "content": email.content,
+            "classification": classification,
+            "response": response
+        }).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Falha ao salvar no Supabase")
+
+        new_email = result.data[0]  # pega o registro inserido
+        return {
+            "id": new_email["id"],
+            "classification": classification,
+            "response": response
+        }
+
     except Exception as e:
-        supabase.rollback()
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Classifier AI - Sistema de Classificação Automática</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .productive-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .unproductive-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                        <i class="fas fa-envelope text-purple-600 text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold">Email Classifier AI</h1>
+                </div>
+                <div class="text-sm bg-white/20 px-4 py-2 rounded-full">
+                    <i class="fas fa-brain mr-2"></i>Sistema Inteligente de Classificação
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-paper-plane mr-3 text-blue-500"></i>
+                    Analisar Email
+                </h2>
+                
+                <form id="emailForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tag mr-2 text-blue-400"></i>Assunto do Email
+                        </label>
+                        <input 
+                            type="text" 
+                            id="subject" 
+                            placeholder="Ex: Solicitação de Suporte Técnico"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-green-400"></i>Remetente
+                        </label>
+                        <input 
+                            type="text" 
+                            id="sender" 
+                            placeholder="Ex: cliente@empresa.com"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-file-alt mr-2 text-purple-400"></i>Conteúdo do Email
+                        </label>
+                        <textarea 
+                            id="content" 
+                            rows="6"
+                            placeholder="Cole o conteúdo completo do email aqui..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        id="submitBtn"
+                        class="w-full gradient-bg text-white py-3 px-6 rounded-lg font-semibold hover:opacity-90 transition-all duration-200 flex items-center justify-center"
+                    >
+                        <i class="fas fa-robot mr-2"></i>
+                        Analisar e Classificar
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="space-y-6">
+                <!-- Loading State -->
+                <div id="loading" class="hidden">
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        <p class="text-gray-600 font-medium">Processando email com IA...</p>
+                        <p class="text-sm text-gray-500">Analisando conteúdo e gerando resposta automática</p>
+                    </div>
+                </div>
+
+                <!-- Results Card -->
+                <div id="results" class="hidden fade-in">
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-chart-pie mr-3 text-green-500"></i>
+                            Resultados da Análise
+                        </h2>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Classificação</label>
+                                <div id="classificationBadge" class="inline-flex items-center px-4 py-2 rounded-full text-white font-semibold">
+                                    <!-- Badge will be inserted here -->
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Resposta Automática Sugerida</label>
+                                <div id="response" class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-700 leading-relaxed">
+                                    <!-- Response will be inserted here -->
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-200">
+                                <h3 class="font-semibold text-gray-800 mb-3">Detalhes do Email</h3>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-600">Assunto:</span>
+                                        <p id="resultSubject" class="font-medium text-gray-800"></p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Remetente:</span>
+                                        <p id="resultSender" class="font-medium text-gray-800"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="error" class="hidden fade-in">
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                            <h3 class="text-red-800 font-semibold">Erro no Processamento</h3>
+                        </div>
+                        <p id="errorMessage" class="text-red-600 text-sm"></p>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-chart-line mr-2 text-blue-500"></i>
+                        Estatísticas
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600" id="totalEmails">0</div>
+                            <div class="text-sm text-blue-800">Total Processado</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600" id="productiveEmails">0</div>
+                            <div class="text-sm text-green-800">Produtivos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-history mr-3 text-purple-500"></i>
+                Histórico de Emails
+            </h2>
+            <div id="emailHistory" class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-gray-600">Últimos emails processados</p>
+                        <button id="refreshHistory" class="text-blue-500 hover:text-blue-700 transition-colors">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div id="historyList" class="space-y-3">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-3"></i>
+                            <p>Nenhum email processado ainda</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 py-8">
+            <div class="text-center">
+                <p class="text-sm text-gray-400">
+                    Sistema de Classificação Automática de Emails - AutoU
+                </p>
+                <p class="text-xs text-gray-500 mt-2">
+                    Desenvolvido para otimizar processos e aumentar a produtividade
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // DOM Elements
+        const emailForm = document.getElementById('emailForm');
+        const loadingElement = document.getElementById('loading');
+        const resultsElement = document.getElementById('results');
+        const errorElement = document.getElementById('error');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Statistics Elements
+        const totalEmailsElement = document.getElementById('totalEmails');
+        const productiveEmailsElement = document.getElementById('productiveEmails');
+
+        // Initialize statistics
+        let totalEmails = 0;
+        let productiveEmails = 0;
+
+        // Form submission handler
+        emailForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const subject = document.getElementById('subject').value.trim();
+            const sender = document.getElementById('sender').value.trim();
+            const content = document.getElementById('content').value.trim();
+
+            if (!subject || !sender || !content) {
+                showError('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            // Show loading state
+            showLoading();
+            hideResults();
+            hideError();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/emails`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        subject,
+                        sender,
+                        content
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Erro ao processar o email');
+                }
+
+                const result = await response.json();
+                
+                // Update statistics
+                totalEmails++;
+                if (result.classification === 'Produtivo') {
+                    productiveEmails++;
+                }
+                updateStatistics();
+                
+                // Display results
+                displayResults(result, subject, sender);
+                addToHistory(result, subject, sender);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'Erro de conexão com o servidor. Verifique se o backend está rodando.');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Display results function
+        function displayResults(result, subject, sender) {
+            const classificationBadge = document.getElementById('classificationBadge');
+            const responseElement = document.getElementById('response');
+            const resultSubject = document.getElementById('resultSubject');
+            const resultSender = document.getElementById('resultSender');
+
+            // Update classification badge
+            classificationBadge.className = 'inline-flex items-center px-4 py-2 rounded-full text-white font-semibold ';
+            classificationBadge.className += result.classification === 'Produtivo' 
+                ? 'productive-badge' 
+                : 'unproductive-badge';
+            
+            classificationBadge.innerHTML = `
+                <i class="fas ${result.classification === 'Produtivo' ? 'fa-check-circle' : 'fa-times-circle'} mr-2"></i>
+                ${result.classification}
+            `;
+
+            // Update response
+            responseElement.textContent = result.response;
+
+            // Update details
+            resultSubject.textContent = subject;
+            resultSender.textContent = sender;
+
+            // Show results
+            showResults();
+        }
+
+        // Add to history function
+        function addToHistory(result, subject, sender) {
+            const historyList = document.getElementById('historyList');
+            
+            // Remove empty state if it exists
+            if (historyList.querySelector('.text-center')) {
+                historyList.innerHTML = '';
+            }
+
+            const historyItem = document.createElement('div');
+            historyItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+            historyItem.innerHTML = `
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-800 truncate">${subject}</p>
+                    <p class="text-sm text-gray-600 truncate">De: ${sender}</p>
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        result.classification === 'Produtivo' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                    }">
+                        ${result.classification}
+                    </span>
+                </div>
+            `;
+
+            historyList.prepend(historyItem);
+        }
+
+        // Update statistics display
+        function updateStatistics() {
+            totalEmailsElement.textContent = totalEmails;
+            productiveEmailsElement.textContent = productiveEmails;
+        }
+
+        // UI Helper functions
+        function showLoading() {
+            loadingElement.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processando...';
+        }
+
+        function hideLoading() {
+            loadingElement.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-robot mr-2"></i>Analisar e Classificar';
+        }
+
+        function showResults() {
+            resultsElement.classList.remove('hidden');
+        }
+
+        function hideResults() {
+            resultsElement.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorElement.classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function hideError() {
+            errorElement.classList.add('hidden');
+        }
+
+        // Refresh history button
+        document.getElementById('refreshHistory').addEventListener('click', () => {
+            // In a real application, this would fetch the actual history from the backend
+            const historyList = document.getElementById('historyList');
+            if (historyList.children.length === 0) {
+                historyList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-3"></i>
+                        <p>Nenhum email processado ainda</p>
+                    </div>
+                `;
+            }
+        });
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Email Classifier AI Frontend initialized');
+            console.log('Backend URL:', API_BASE_URL);
+            console.log('Make sure your FastAPI backend is running on port 8000');
+        });
+    </script>
+</body>
+</html>
+
